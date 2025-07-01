@@ -1,13 +1,15 @@
 #include "BoardData.h"
+#include <esp_err.h>
 
-BoardData_t BoardData = {
-    .ch1_status = false,
-    .fault_1_status = false,
-    .fault_2_status = false,
-    .ch2_status = false,
-    .Voltage24V_in = 0.0f,
-    .Current24V_in = 0.0f,
-    .Voltage12V_in = 0.0f,
-    .Current12V_in = 0.0f,
-    .CurrentBoard = 0.0f
-};
+BoardData_t BoardData;
+SemaphoreHandle_t BoardDataSemaphore;
+
+esp_err_t board_data_init(void) {
+    // Initialize semaphore
+    BoardDataSemaphore = xSemaphoreCreateMutex();
+    if (BoardDataSemaphore == NULL) {
+        return ESP_ERR_NO_MEM;
+    }
+    // Initialize board data (valves are initialized in valves_init())
+    return ESP_OK;
+}

@@ -121,59 +121,117 @@ menu "TANWA BOARD CONFIGURATION"
                 Acceptance mask for TWAI filter.
     endmenu
 
-menu "24V STATUS Pins"
-config CH1_STATUS
-    int "CH1 GPIO pin"
-    default 9
-config FAULT_1_STATUS
-    int "FAULT_1 GPIO pin"
-    default 10
-config FAULT_2_STATUS
-    int "FAULT_2 GPIO pin"
-    default 11
-config CH2_STATUS
-    int "CH2 GPIO pin"
-    default 12
-endmenu
+menu "GPIO CONFIGURATION"
 
+    config GPIO_LED
+        int "LED GPIO"
+        default 46
+        help
+            GPIO number for LED.
+    
+    config GPIO_ISENSE
+        int "I_SENSE GPIO"
+        default 4
+        help
+            GPIO number for L_SENSE.
 
-menu "24V CONTROL Pins"
-config RETRY_GPIO
-    int "RETRY GPIO pin"
-    default 35
-config SHDN_GPIO
-    int "SHDN GPIO pin"
-    default 36
-config DISABLE_1_GPIO
-    int "DISABLE_1 GPIO pin"
-    default 37
-config DISABLE_2_GPIO
-    int "DISABLE_2 GPIO pin"
-    default 38
-config SOL_EN_GPIO
-    int "24V_SOL_EN GPIO pin"
-    default 17
-endmenu
+    config GPIO_SERVO1
+        int "SERVO1 GPIO"
+        default 15
+        help
+            GPIO number for SERVO1.
 
-menu "Analog & Sense Pins"
-config I_SENSE_24V_GPIO
-    int "I_SENSE_24V GPIO pin"
-    default 16
-config I_SENSE_12V_GPIO
-    int "I_SENSE_12V GPIO pin"
-    default 21
-config 24V_SEN_GPIO
-    int "24V_SEN GPIO pin"
-    default 18
-config 12V_SEN_GPIO
-    int "12V_SEN GPIO pin"
-    default 48
-endmenu
+    config GPIO_SERVO2
+        int "SERVO2 GPIO"
+        default 7
+        help
+            GPIO number for SERVO2.
+    config GPIO_SERVO3
+        int "SERVO3 GPIO"
+        default 6
+        help
+            GPIO number for SERVO3.
 
-menu "12V Logic Pins"
-config SEL_12V_IN_GPIO
-    int "12V_SEL_IN GPIO pin"
-    default 47
+    config GPIO_SERVO4
+        int "SERVO4 GPIO"
+        default 5
+        help
+            GPIO number for SERVO4.
+
+    
+    config GPIO_STALL1_IN
+        int "STALL1_IN GPIO"
+        default 21
+        help
+            GPIO number for STALL1_IN.
+
+    config GPIO_STALL2_IN
+        int "STALL2_IN GPIO"
+        default 16
+        help
+            GPIO number for STALL2_IN.
+
+    config GPIO_MOTOR1_IN1
+        int "MOTOR1_IN1 GPIO"
+        default 9
+        help
+            GPIO number for MOTOR1_IN1.
+
+    config GPIO_MOTOR1_IN2
+        int "MOTOR1_IN2 GPIO"
+        default 10
+        help
+            GPIO number for MOTOR1_IN2.
+
+    config GPIO_LIMIT_SWITCH1
+        int "LIMIT_SWITCH1 GPIO"
+        default 12
+        help
+            GPIO number for LIMIT_SWITCH1.
+
+    config GPIO_LIMIT_SWITCH2
+        int "LIMIT_SWITCH2 GPIO"
+        default 11
+        help
+            GPIO number for LIMIT_SWITCH2.
+    
+
+    config GPIO_SOL1
+        int "SOL1 GPIO"
+        default 48
+        help
+            GPIO number for SOL1.
+
+    config GPIO_SOL2
+        int "SOL2 GPIO"
+        default 47
+        help
+            GPIO number for SOL2.
+
+    config GPIO_SOL3
+        int "SOL3 GPIO"
+        default 38
+        help
+            GPIO number for SOL3.
+
+    config GPIO_SOL4
+        int "SOL4 GPIO"
+        default 37
+        help
+            GPIO number for SOL4.
+
+    config GPIO_SOL5
+        int "SOL5 GPIO"
+        default 36
+        help
+            GPIO number for SOL5.
+
+    config GPIO_SOL6
+        int "SOL6 GPIO"
+        default 35
+        help
+            GPIO number for SOL6.
+
 endmenu
 
 endmenu
