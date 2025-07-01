@@ -5,7 +5,7 @@
 #include "console.h"
 #define TAG "CONSOLE_CONFIG"
 
-static int reset_device(int argc, char **arg) {
+static int reset_device(int argc, char **argv) {
     esp_restart();
     return 0;
 }
@@ -44,7 +44,7 @@ static int read_temperature(int argc, char **argv) {
     return 0;
 }
 
-static int read_pwr_data(int argc, char **arg)
+static int read_pwr_data(int argc, char **argv)
 {
     CONSOLE_WRITE("PWR DATA :");
     CONSOLE_WRITE("##########  24V  ############");
@@ -56,9 +56,9 @@ static int read_pwr_data(int argc, char **arg)
 
 static esp_console_cmd_t cmd[] = {
     // system commands
-    {"reset-dev", "restart device", NULL, reset_device, NULL},
-    {"temp-read", "read temperature", NULL, read_temperature, NULL},
-    {"pwr-data", "read pwr data", NULL, read_pwr_data, NULL},
+    {"reset-dev", "restart device", NULL, reset_device, NULL, NULL, NULL},
+    {"temp-read", "read temperature", NULL, read_temperature, NULL, NULL, NULL},
+    {"pwr-data", "read pwr data", NULL, read_pwr_data, NULL, NULL, NULL},
 };
 
 esp_err_t console_config_init() {
