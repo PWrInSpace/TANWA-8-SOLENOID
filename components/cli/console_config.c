@@ -10,6 +10,16 @@ static int reset_device(int argc, char **argv) {
     return 0;
 }
 
+static int sol_on(int argc, char **argv) {
+    set_valve_state(N20_SOL_FILL,VALVE_ON);
+    return 0;
+}
+
+static int sol_off(int argc, char **argv) {
+    set_valve_state(N20_SOL_FILL,VALVE_OFF);
+    return 0;
+}
+
 static int read_temperature(int argc, char **argv) {
     float temp[2] = {50, 100};
     int raw[2] = {1000,2000};
@@ -59,6 +69,8 @@ static esp_console_cmd_t cmd[] = {
     {"reset-dev", "restart device", NULL, reset_device, NULL, NULL, NULL},
     {"temp-read", "read temperature", NULL, read_temperature, NULL, NULL, NULL},
     {"pwr-data", "read pwr data", NULL, read_pwr_data, NULL, NULL, NULL},
+    {"sol-on", "sol_on", NULL, sol_on, NULL, NULL, NULL},
+    {"sol-off", "sol_off", NULL, sol_off, NULL, NULL, NULL},
 };
 
 esp_err_t console_config_init() {
