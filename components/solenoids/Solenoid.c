@@ -47,18 +47,18 @@ esp_err_t set_valve_state(ValveName name, ValveState state) {
     }
 
     // Acquire semaphore
-    if (xSemaphoreTake(BoardDataSemaphore, pdMS_TO_TICKS(1000)) != pdTRUE) {
-        return ESP_ERR_TIMEOUT;
-    }
+   // if (xSemaphoreTake(BoardDataSemaphore, pdMS_TO_TICKS(1000)) != pdTRUE) {
+   //     return ESP_ERR_TIMEOUT;
+   // }
 
     // Update valve state
-    BoardData.valves[name].state = state;
+  //  BoardData.valves[name].state = state;
     
     // Set GPIO level
     esp_err_t err = gpio_set_level(BoardData.valves[name].gpio_pin, state);
     
     // Release semaphore
-    xSemaphoreGive(BoardDataSemaphore);
+  //  xSemaphoreGive(BoardDataSemaphore);
     
     return err;
 }

@@ -1,30 +1,31 @@
-///===-----------------------------------------------------------------------------------------===//
-///
-/// Copyright (c) PWr in Space. All rights reserved.
-/// Created: 27.01.2024 by Michał Kos
-///
-///===-----------------------------------------------------------------------------------------===//
-///
-/// \file
-/// This file contains implementation of the system console configuration, including initialization
-/// and available commands for debugging/testing purposes.
-///===-----------------------------------------------------------------------------------------===//
-
-#include "esp_log.h"
-#include "esp_system.h"
-
-#include "console.h"
 #include "console_config.h"
-
+#include "BoardData.h"
+#include "esp_system.h"
+#include "esp_log.h"
+#include "console.h"
 #define TAG "CONSOLE_CONFIG"
 
-
-// example function to reset the device
-int reset_device(int argc, char **argv) {
-    ESP_LOGI(TAG, "Resetting device...");
+static int reset_device(int argc, char **argv) {
     esp_restart();
     return 0;
 }
+
+static int sol_on(int argc, char **argv) {
+    esp_err_t err = gpio_set_level(CONFIG_GPIO_SOL1, 1);
+     err = gpio_set_level(CONFIG_GPIO_SOL2, 1);
+     err = gpio_set_level(CONFIG_GPIO_SOL3, 1);
+     err = gpio_set_level(CONFIG_GPIO_SOL4, 1);
+     err = gpio_set_level(CONFIG_GPIO_SOL5, 1);
+     err = gpio_set_level(CONFIG_GPIO_SOL6, 1);
+   // set_valve_state(N20_SOL_FILL,VALVE_ON);
+    return 0;
+}
+
+static int sol_off(int argc, char **argv) {
+    set_valve_state(N20_SOL_FILL,VALVE_OFF);
+    return 0;
+}
+
 static int read_temperature(int argc, char **argv) {
     float temp[2] = {50, 100};
     int raw[2] = {1000,2000};
@@ -69,23 +70,29 @@ static int read_pwr_data(int argc, char **argv)
     return 0;
 }
 
- // Place for the console configuration
-
 static esp_console_cmd_t cmd[] = {
     // system commands
     {"reset-dev", "restart device", NULL, reset_device, NULL, NULL, NULL},
-    {"temp-read", "read temperature", NULL, read_temperature, NULL, NULL,NULL},
-    {"pwr-data", "read pwr data", NULL, read_pwr_data, NULL, NULL,NULL},
+    {"temp-read", "read temperature", NULL, read_temperature, NULL, NULL, NULL},
+    {"pwr-data", "read pwr data", NULL, read_pwr_data, NULL, NULL, NULL},
+    {"sol-on", "sol_on", NULL, sol_on, NULL, NULL, NULL},
+    {"sol-off", "sol_off", NULL, sol_off, NULL, NULL, NULL},
 };
-
 
 esp_err_t console_config_init() {
     esp_err_t ret;
-    ret = console_init();
-    ret = console_register_commands(cmd, sizeof(cmd) / sizeof(cmd[0]));
+    ret = console_init();  // Ensure this succeeds
     if (ret != ESP_OK) {
-        ESP_LOGE(TAG, "%s", esp_err_to_name(ret));
+        ESP_LOGE(TAG, "console_init failed: %s", esp_err_to_name(ret));
         return ret;
     }
-    return ret;
+
+    ret = console_register_commands(cmd, sizeof(cmd) / sizeof(cmd[0]));
+    if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "console_register_commands failed: %s", esp_err_to_name(ret));
+        return ret;
+    }
+
+    ESP_LOGI(TAG, "Console commands registered successfully.");
+    return ESP_OK;
 }
