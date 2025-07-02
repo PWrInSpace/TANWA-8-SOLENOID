@@ -11,17 +11,20 @@ static int reset_device(int argc, char **argv) {
 }
 
 static int sol_on(int argc, char **argv) {
+    CONSOLE_WRITE("TURNED ON SOLENOIDS ALL!:");
     esp_err_t err = gpio_set_level(CONFIG_GPIO_SOL1, 1);
      err = gpio_set_level(CONFIG_GPIO_SOL2, 1);
      err = gpio_set_level(CONFIG_GPIO_SOL3, 1);
      err = gpio_set_level(CONFIG_GPIO_SOL4, 1);
      err = gpio_set_level(CONFIG_GPIO_SOL5, 1);
      err = gpio_set_level(CONFIG_GPIO_SOL6, 1);
+     CONSOLE_WRITE("TURNED ON SOLENOIDS ALL!:");
    // set_valve_state(N20_SOL_FILL,VALVE_ON);
     return 0;
 }
 
 static int sol_off(int argc, char **argv) {
+    CONSOLE_WRITE("TURNED OFF SOLENOID!:");
     set_valve_state(N20_SOL_FILL,VALVE_OFF);
     return 0;
 }

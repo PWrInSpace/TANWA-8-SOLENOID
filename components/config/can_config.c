@@ -6,6 +6,7 @@
 #include "esp_err.h"
 
 #include "driver/twai.h"
+#include "Solenoid.h"
 
 #define TAG "CAN_CONFIG"
 
@@ -20,10 +21,44 @@ esp_err_t new_command_handler(uint8_t *data, uint8_t length) {
     return ESP_OK;
 }
 
+esp_err_t sol_open_callback(uint8_t *data, uint8_t length) {
+    if (!data || length == 0 || *data >= NUM_OF_SOLENOIDS) {
+        return ESP_ERR_INVALID_ARG;
+    }
+
+    return set_valve_state((ValveName)(*data), VALVE_ON);
+}
+
+esp_err_t sol_close_callback(uint8_t *data, uint8_t length) {
+    if (!data || length == 0 || *data >= NUM_OF_SOLENOIDS) {
+        return ESP_ERR_INVALID_ARG;
+    }
+
+    return set_valve_state((ValveName)(*data), VALVE_OFF);
+}
+
+esp_err_t servo_1_callbak(uint8_t *data, uint8_t length) {
+    if (!data || length == 0) {
+        return ESP_ERR_INVALID_ARG;
+    }
+
+    return ESP_OK;
+}
+
+esp_err_t servo_2_callbak(uint8_t *data, uint8_t length) {
+    if (!data || length == 0) {
+        return ESP_ERR_INVALID_ARG;
+    }
+return ESP_OK;
+}
+
 can_command_t can_commands[] = {
     // Example command registration
     {CAN_TEMPLATE_MESSAGE_ID, new_command_handler},
-    // Add your CAN commands here
+    {CAN_OPEN_SOL_ID , sol_open_callback},
+    {CAN_CLOSE_SOL_ID , sol_close_callback},
+    {CAN_SERVO_1 , servo_1_callbak},
+    {CAN_SERVO_2 , servo_2_callbak}
 };
 
 esp_err_t can_config_init(void) {

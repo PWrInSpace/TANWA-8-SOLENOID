@@ -4,12 +4,10 @@
 /** PLACE YOUR CAN CALLBACKS AND CAN MESSAGES HERE IN FORMAT*/
 typedef enum {
     CAN_TEMPLATE_MESSAGE_ID = 0xFF,
- /*    CAN_MSG_ID_1 = ...,
- *     CAN_MSG_ID_2 = ...,
- *     CAN_MSG_ID_3 = ...,
- *     CAN_MSG_ID_4 = ...,
- *     CAN_MSG_ID_5 = ...,
- */
+    CAN_OPEN_SOL_ID = 0x11,
+    CAN_CLOSE_SOL_ID = 0x12,
+    CAN_SERVO_1,
+    CAN_SERVO_2
 } can_message_id_t;
 
 /*PLACE YOUR FUNCTIONS ACCORDING TO THE TEMPLATE
