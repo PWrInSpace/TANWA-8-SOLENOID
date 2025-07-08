@@ -31,6 +31,18 @@ static inline uint32_t angle_to_duty_us(uint8_t angle) {
          SERVO_MIN_PULSEWIDTH_US;
 }
 
+
+static void close_servo_callback(TimerHandle_t xTimer) {
+  ServoId_t servo_id = (ServoId_t)pvTimerGetTimerID(xTimer);
+  Servo_t *servo_ptr = &servos[servo_id];
+
+  // Move servo to closed position
+  if (mcpwm_comparator_set_compare_value(servo_ptr->comparator, angle_to_duty_us(VALVE_CLOSE_POSITION)) != ESP_OK) {
+    ESP_LOGE(TAG, "Failed to close servo %d", servo_id);
+  } else {
+    ESP_LOGI(TAG, "Servo %d closed after timeout", servo_id);
+  }
+}
 /************************** CODE *********************************************/
 
 uint16_t servo_init(ServoId_t servo_id) {
@@ -96,6 +108,20 @@ uint16_t servo_init(ServoId_t servo_id) {
                                      MCPWM_GEN_ACTION_LOW),
       MCPWM_GEN_COMPARE_EVENT_ACTION_END()));
 
+
+  servo_ptr->close_timer = xTimerCreate(
+      "CLOSE_SERVO_TIMER",              // Timer name
+      pdMS_TO_TICKS(1000),    // Default period (will be updated in move_servo)
+      pdFALSE,                // One-shot timer (not auto-reload)
+      (void *)(intptr_t)servo_id, // Timer ID (servo_id)
+      close_servo_callback     // Callback function
+  );
+  if (servo_ptr->close_timer == NULL) {
+    ESP_LOGE(TAG, "Failed to create timer for servo %d", servo_id);
+    return EXIT_FAILURE;
+  }
+
+
   // Enable and start timer
   ESP_ERROR_CHECK(mcpwm_timer_enable(servo_ptr->timer));
   ESP_ERROR_CHECK(
@@ -106,24 +132,31 @@ uint16_t servo_init(ServoId_t servo_id) {
 }
 
 
-uint16_t move_servo(ServoId_t servo_id, uint8_t angle) {
+esp_err_t move_servo(ServoId_t servo_id, uint8_t angle, uint16_t open_time_ms) {
   if (servo_id >= SERVO_COUNT) {
     ESP_LOGE(TAG, "Invalid servo ID: %d", servo_id);
-    return EXIT_FAILURE;
+    return ESP_LOG_ERROR;
   }
 
   Servo_t *servo_ptr = &servos[servo_id];
-  ESP_LOGI(TAG, "Moving servo %d to angle: %d", servo_id, angle);
+  ESP_LOGI(TAG, "Moving servo[%d] to angle: %d", servo_id, angle);
 
   if (mcpwm_comparator_set_compare_value(servo_ptr->comparator, angle_to_duty_us(angle)) != ESP_OK) {
-    ESP_LOGE(TAG, "Move servo %d FAILURE", servo_id);
-    return EXIT_FAILURE;
+    ESP_LOGE(TAG, "Moving servo %d FAILURE", servo_id);
+    return ESP_LOG_ERROR;
+  }
+  if (xTimerIsTimerActive(servo_ptr->close_timer) != pdFALSE) {
+    xTimerStop(servo_ptr->close_timer, 0);
+  }
+  if (open_time_ms > 0) {
+    xTimerChangePeriod(servo_ptr->close_timer, pdMS_TO_TICKS(open_time_ms), 0);
+    xTimerStart(servo_ptr->close_timer, 0);
   }
 
-  return EXIT_SUCCESS;
+  return ESP_OK;
 }
 
-esp_err_t open_servo(ServoId_t servo_id)
+esp_err_t open_servo(ServoId_t servo_id, uint16_t open_time)
 {
   if (servo_id >= SERVO_COUNT) {
     ESP_LOGE(TAG, "Invalid servo ID: %d", servo_id);
@@ -133,11 +166,13 @@ esp_err_t open_servo(ServoId_t servo_id)
   Servo_t *servo_ptr = &servos[servo_id];
   ESP_LOGI(TAG, "OPENING servo[%d] to angle: %d", servo_id, VALVE_OPEN_POSITION);
 
-   if (mcpwm_comparator_set_compare_value(servo_ptr->comparator, angle_to_duty_us(VALVE_OPEN_POSITION)) != ESP_OK) {
-    ESP_LOGE(TAG, "OPENING servo[%d] FAILURE", servo_id);
+  if(move_servo(servo_id, VALVE_OPEN_POSITION, open_time)!=ESP_OK)
+  {
     return ESP_LOG_ERROR;
   }
-  ESP_LOGI(TAG, "OPENED servo[%d] to angle: %d", servo_id, VALVE_OPEN_POSITION);
+  ESP_LOGI(TAG, "OPENED servo[%d] to angle: %d for time ms: %d", servo_id, VALVE_OPEN_POSITION, open_time);
+
+  
 
   return ESP_OK;
 }

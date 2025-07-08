@@ -74,15 +74,26 @@ static int read_pwr_data(int argc, char **argv)
 
 static int servo_angle_move(int argc, char **argv)
 {
+    if (argc < 3) {
+    CONSOLE_WRITE("ERROR: Usage: servo-move <servo_id> <angle> <time_ms>");
+    return -1;
+  }
     ServoId_t servo = atoi(argv[1]);
     uint8_t angle = atoi(argv[2]);
-    move_servo(servo, angle);
+    uint16_t time_ms = 0;
+    if (argc >= 4) {
+    time_ms = atoi(argv[3]);
+    } else {
+    CONSOLE_WRITE("No time_ms provided, servo %d will stay at angle %d", servo, angle);
+    }
+    move_servo(servo, angle, time_ms);
     CONSOLE_WRITE("MOVE_SERVO_ANGLE SERVO[%d] = %d",servo, angle);
     return 0;
 }
 
 static int servo_close_cli(int argc, char **argv)
 {
+    
     ServoId_t servo = atoi(argv[1]);
     close_servo(servo);
     CONSOLE_WRITE("SERVO_CLOSE SERVO[%d] = %d",servo, VALVE_CLOSE_POSITION);
@@ -91,8 +102,18 @@ static int servo_close_cli(int argc, char **argv)
 
 static int servo_open_cli(int argc, char **argv)
 {
-    ServoId_t servo = atoi(argv[1]);;
-    open_servo(servo);
+    if (argc < 3) {
+    CONSOLE_WRITE("ERROR: Usage: servo-open <servo_id> <time_ms>");
+    return -1;
+  }
+    ServoId_t servo = atoi(argv[1]);
+    uint16_t time_ms = 0 ;
+    if (argc >= 3) {
+    time_ms = atoi(argv[2]);
+    } else {
+    CONSOLE_WRITE("No time_ms provided, servo %d will stay at angle %d", servo, VALVE_OPEN_POSITION);
+    }
+    open_servo(servo, time_ms);
     CONSOLE_WRITE("OPEN_SERVO SERVO[%d] = %d",servo, VALVE_OPEN_POSITION);
     return 0;
 }
@@ -104,7 +125,7 @@ static esp_console_cmd_t cmd[] = {
     {"pwr-data", "read pwr data", NULL, read_pwr_data, NULL, NULL, NULL},
     {"sol-on", "sol_on", NULL, sol_on, NULL, NULL, NULL},
     {"sol-off", "sol_off", NULL, sol_off, NULL, NULL, NULL},
-    {"servo-angle", "servo-angle-move", NULL, servo_angle_move, NULL, NULL, NULL},
+    {"servo-move", "servo-angle-move", NULL, servo_angle_move, NULL, NULL, NULL},
     {"servo-open", "servo-open", NULL, servo_open_cli, NULL, NULL, NULL},
     {"servo-close", "servo-close", NULL, servo_close_cli, NULL, NULL, NULL},
 };

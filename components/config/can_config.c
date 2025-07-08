@@ -8,6 +8,7 @@
 #include "driver/twai.h"
 #include "Solenoid.h"
 #include "solenoid_config.h"
+#include "servo_config.h"
 
 #define TAG "CAN_CONFIG"
 
@@ -38,19 +39,21 @@ esp_err_t sol_close_callback(uint8_t *data, uint8_t length) {
     return set_valve_state((ValveName)(*data), VALVE_OFF);
 }
 
-esp_err_t servo_1_callbak(uint8_t *data, uint8_t length) {
+esp_err_t servo_open_callbak(uint8_t *data, uint8_t length) {
     if (!data || length == 0) {
         return ESP_ERR_INVALID_ARG;
     }
-
-    return ESP_OK;
+    ServoId_t servo = data[0];
+    uint16_t time_ms = (uint16_t)(data[1] | (data[2] << 8));
+    return open_servo(servo, time_ms);
 }
 
-esp_err_t servo_2_callbak(uint8_t *data, uint8_t length) {
+esp_err_t servo_close_callbak(uint8_t *data, uint8_t length) {
     if (!data || length == 0) {
         return ESP_ERR_INVALID_ARG;
     }
-return ESP_OK;
+    ServoId_t servo = data[0];
+    return close_servo(servo);
 }
 
 can_command_t can_commands[] = {
@@ -58,8 +61,8 @@ can_command_t can_commands[] = {
     {CAN_TEMPLATE_MESSAGE_ID, new_command_handler},
     {CAN_OPEN_SOL_ID , sol_open_callback},
     {CAN_CLOSE_SOL_ID , sol_close_callback},
-    {CAN_SERVO_1 , servo_1_callbak},
-    {CAN_SERVO_2 , servo_2_callbak}
+    {CAN_OPEN_SERVO_ID , servo_open_callbak},
+    {CAN_CLOSE_SERVO_ID , servo_close_callbak}
 };
 
 esp_err_t can_config_init(void) {

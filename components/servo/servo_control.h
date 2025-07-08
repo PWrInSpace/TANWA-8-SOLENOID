@@ -28,6 +28,8 @@
 
 #include "driver/mcpwm_prelude.h"
 #include "esp_log.h"
+#include <freertos/FreeRTOS.h>
+#include <freertos/timers.h>
 /************************** SERVO IDENTIFIERS ********************************/
 
 typedef enum {
@@ -44,6 +46,7 @@ typedef struct Servo {
     mcpwm_cmpr_handle_t comparator;
     mcpwm_gen_handle_t generator;
     uint8_t angle;
+    TimerHandle_t close_timer;
 } Servo_t;
 
 /************************** INIT MACROS **************************************/
@@ -69,13 +72,13 @@ uint16_t servo_init(ServoId_t servo_id);
  * @param angle Target angle (between SERVO_MIN_ANGLE and SERVO_MAX_ANGLE)
  * @return uint16_t Status code (0 for success, non-zero for error)
  */
-uint16_t move_servo(ServoId_t servo_id, uint8_t angle);
+esp_err_t move_servo(ServoId_t servo_id, uint8_t angle, uint16_t open_time_ms);
 
 /**
  * 
  */
 
- esp_err_t open_servo(ServoId_t servo_id);
+ esp_err_t open_servo(ServoId_t servo_id, uint16_t open_time_ms);
  esp_err_t close_servo(ServoId_t servo_id);
 
 #endif // SERVO_CONTROL_HH
