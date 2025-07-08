@@ -26,10 +26,8 @@
 #define VALVE_CLOSE_POSITION 115U
 #define VALVE_OPEN_POSITION 1U
 
-#include <freertos/FreeRTOS.h>
-#include <freertos/task.h>
 #include "driver/mcpwm_prelude.h"
-
+#include "esp_log.h"
 /************************** SERVO IDENTIFIERS ********************************/
 
 typedef enum {
@@ -45,9 +43,8 @@ typedef struct Servo {
     mcpwm_oper_handle_t oper;
     mcpwm_cmpr_handle_t comparator;
     mcpwm_gen_handle_t generator;
+    uint8_t angle;
 } Servo_t;
-
-extern Servo_t servos[SERVO_COUNT];
 
 /************************** INIT MACROS **************************************/
 
@@ -73,5 +70,12 @@ uint16_t servo_init(ServoId_t servo_id);
  * @return uint16_t Status code (0 for success, non-zero for error)
  */
 uint16_t move_servo(ServoId_t servo_id, uint8_t angle);
+
+/**
+ * 
+ */
+
+ esp_err_t open_servo(ServoId_t servo_id);
+ esp_err_t close_servo(ServoId_t servo_id);
 
 #endif // SERVO_CONTROL_HH

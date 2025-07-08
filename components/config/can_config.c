@@ -7,6 +7,7 @@
 
 #include "driver/twai.h"
 #include "Solenoid.h"
+#include "solenoid_config.h"
 
 #define TAG "CAN_CONFIG"
 

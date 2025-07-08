@@ -27,7 +27,7 @@ void setup_task(void *arg) {
         ESP_LOGE(TAG, "Board configuration failed");
         vTaskDelete(NULL);
     }
-    ESP_LOGI(TAG, "DEBUG");
+
  //    Start the app task
     if(app_task_init() != ESP_OK) {
         ESP_LOGE(TAG, "Failed to initialize app task");

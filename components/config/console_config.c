@@ -3,6 +3,9 @@
 #include "esp_system.h"
 #include "esp_log.h"
 #include "console.h"
+#include "servo_control.h"
+#include "solenoid_config.h"
+#include "Solenoid.h"
 #define TAG "CONSOLE_CONFIG"
 
 static int reset_device(int argc, char **argv) {
@@ -11,28 +14,24 @@ static int reset_device(int argc, char **argv) {
 }
 
 static int sol_on(int argc, char **argv) {
-    CONSOLE_WRITE("TURNED ON SOLENOIDS ALL!:");
-    esp_err_t err = gpio_set_level(CONFIG_GPIO_SOL1, 1);
-     err = gpio_set_level(CONFIG_GPIO_SOL2, 1);
-     err = gpio_set_level(CONFIG_GPIO_SOL3, 1);
-     err = gpio_set_level(CONFIG_GPIO_SOL4, 1);
-     err = gpio_set_level(CONFIG_GPIO_SOL5, 1);
-     err = gpio_set_level(CONFIG_GPIO_SOL6, 1);
-     CONSOLE_WRITE("TURNED ON SOLENOIDS ALL!:");
-   // set_valve_state(N20_SOL_FILL,VALVE_ON);
+    ValveName valve = atoi(argv[1]);
+    set_valve_state(valve, VALVE_ON);
+    CONSOLE_WRITE("TURNED ON -> SOLENOID[%d]", valve);
     return 0;
 }
 
 static int sol_off(int argc, char **argv) {
-    CONSOLE_WRITE("TURNED OFF SOLENOID!:");
-    set_valve_state(N20_SOL_FILL,VALVE_OFF);
+    ValveName valve = atoi(argv[1]);
+    set_valve_state(valve, VALVE_OFF);
+    CONSOLE_WRITE("TURNED OFF -> SOLENOID[%d]", valve);
     return 0;
 }
+
 
 static int read_temperature(int argc, char **argv) {
     float temp[2] = {50, 100};
     int raw[2] = {1000,2000};
-    uint8_t ret = 0;
+    //uint8_t ret = 0;
 /**
     ret = tmp1075_get_temp_raw(&(TANWA_hardware.tmp1075[0]), &raw[0]);
     if (ret != TMP1075_OK) {
@@ -73,6 +72,31 @@ static int read_pwr_data(int argc, char **argv)
     return 0;
 }
 
+static int servo_angle_move(int argc, char **argv)
+{
+    ServoId_t servo = atoi(argv[1]);
+    uint8_t angle = atoi(argv[2]);
+    move_servo(servo, angle);
+    CONSOLE_WRITE("MOVE_SERVO_ANGLE SERVO[%d] = %d",servo, angle);
+    return 0;
+}
+
+static int servo_close_cli(int argc, char **argv)
+{
+    ServoId_t servo = atoi(argv[1]);
+    close_servo(servo);
+    CONSOLE_WRITE("SERVO_CLOSE SERVO[%d] = %d",servo, VALVE_CLOSE_POSITION);
+    return 0;
+}
+
+static int servo_open_cli(int argc, char **argv)
+{
+    ServoId_t servo = atoi(argv[1]);;
+    open_servo(servo);
+    CONSOLE_WRITE("OPEN_SERVO SERVO[%d] = %d",servo, VALVE_OPEN_POSITION);
+    return 0;
+}
+
 static esp_console_cmd_t cmd[] = {
     // system commands
     {"reset-dev", "restart device", NULL, reset_device, NULL, NULL, NULL},
@@ -80,6 +104,9 @@ static esp_console_cmd_t cmd[] = {
     {"pwr-data", "read pwr data", NULL, read_pwr_data, NULL, NULL, NULL},
     {"sol-on", "sol_on", NULL, sol_on, NULL, NULL, NULL},
     {"sol-off", "sol_off", NULL, sol_off, NULL, NULL, NULL},
+    {"servo-angle", "servo-angle-move", NULL, servo_angle_move, NULL, NULL, NULL},
+    {"servo-open", "servo-open", NULL, servo_open_cli, NULL, NULL, NULL},
+    {"servo-close", "servo-close", NULL, servo_close_cli, NULL, NULL, NULL},
 };
 
 esp_err_t console_config_init() {

@@ -15,6 +15,7 @@
 
 #include "led_driver.h"
 #include "esp_err.h"
+#include <stdint.h>
 
 typedef struct {
     char board_name[32];

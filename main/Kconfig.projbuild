@@ -122,12 +122,6 @@ menu "TANWA BOARD CONFIGURATION"
     endmenu
 
 menu "GPIO CONFIGURATION"
-
-    config GPIO_LED
-        int "LED GPIO"
-        default 46
-        help
-            GPIO number for LED.
     
     config GPIO_ISENSE
         int "I_SENSE GPIO"

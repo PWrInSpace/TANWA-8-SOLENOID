@@ -10,20 +10,17 @@
  */
 
 #include "servo_control.h"
-
+#include "servo_config.h"
 /************************** PRIVATE INCLUDES ********************************/
 
 #include "esp_log.h"
+#include "BoardData.h"
 
 /************************** PRIVATE VARIABLES *******************************/
 
 static const char *TAG = "SERVO CONTROL";
 
 // Servo configurations
-Servo_t servos[SERVO_COUNT] = {
-    [N20_FILL_SERVO] = SERVO_INIT(18), // GPIO 18 for N20_FILL_SERVO
-    [N2_FILL_SERVO] = SERVO_INIT(19)   // GPIO 19 for N2_FILL_SERVO
-};
 
 /************************** PRIVATE FUNCTIONS *******************************/
 
@@ -108,6 +105,7 @@ uint16_t servo_init(ServoId_t servo_id) {
   return EXIT_SUCCESS;
 }
 
+
 uint16_t move_servo(ServoId_t servo_id, uint8_t angle) {
   if (servo_id >= SERVO_COUNT) {
     ESP_LOGE(TAG, "Invalid servo ID: %d", servo_id);
@@ -123,4 +121,42 @@ uint16_t move_servo(ServoId_t servo_id, uint8_t angle) {
   }
 
   return EXIT_SUCCESS;
+}
+
+esp_err_t open_servo(ServoId_t servo_id)
+{
+  if (servo_id >= SERVO_COUNT) {
+    ESP_LOGE(TAG, "Invalid servo ID: %d", servo_id);
+    return ESP_LOG_ERROR;
+  }
+
+  Servo_t *servo_ptr = &servos[servo_id];
+  ESP_LOGI(TAG, "OPENING servo[%d] to angle: %d", servo_id, VALVE_OPEN_POSITION);
+
+   if (mcpwm_comparator_set_compare_value(servo_ptr->comparator, angle_to_duty_us(VALVE_OPEN_POSITION)) != ESP_OK) {
+    ESP_LOGE(TAG, "OPENING servo[%d] FAILURE", servo_id);
+    return ESP_LOG_ERROR;
+  }
+  ESP_LOGI(TAG, "OPENED servo[%d] to angle: %d", servo_id, VALVE_OPEN_POSITION);
+
+  return ESP_OK;
+}
+
+esp_err_t close_servo(ServoId_t servo_id)
+{
+  if (servo_id >= SERVO_COUNT) {
+    ESP_LOGE(TAG, "Invalid servo ID: %d", servo_id);
+    return ESP_LOG_ERROR;
+  }
+
+  Servo_t *servo_ptr = &servos[servo_id];
+  ESP_LOGI(TAG, "CLOSING servo[%d] to angle: %d", servo_id, VALVE_CLOSE_POSITION);
+
+   if (mcpwm_comparator_set_compare_value(servo_ptr->comparator, angle_to_duty_us(VALVE_CLOSE_POSITION)) != ESP_OK) {
+    ESP_LOGE(TAG, "CLOSING servo[%d] FAILURE", servo_id);
+    return ESP_LOG_ERROR;
+  }
+  ESP_LOGI(TAG, "CLOSED servo[%d] to angle: %d", servo_id, VALVE_CLOSE_POSITION);
+
+  return ESP_OK;
 }

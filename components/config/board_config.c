@@ -23,6 +23,8 @@
 #include "mcu_twai_config.h"
 #include "can_config.h"
 #include "console_config.h"
+#include "solenoid_config.h"
+#include "servo_config.h"
 
 #define TAG "BOARD_CONFIG"
 
@@ -31,7 +33,7 @@ void _led_delay(uint32_t _ms) {
 }
 
 board_config_t config = {
-    .board_name = "TANWA_POWER", //CHANGE TO REAL BOARD NAME
+    .board_name = "TANWA_SOLENOID", //CHANGE TO REAL BOARD NAME
     .status_led = {
         ._gpio_set_level = _mcu_gpio_set_level,
         ._delay = _led_delay,
@@ -72,9 +74,21 @@ esp_err_t board_config_init(void) {
         ESP_LOGE(TAG, "Console initialization failed");
         return err;
     }
-    return ESP_OK;
 
     //*********** ADD HARDWARE CONFIGURATION HERE ***********//
 
-    
+    err = valves_init();
+    if (err!=ESP_OK)
+    {
+        ESP_LOGE(TAG, "Valves initialization failed");
+        return err;
+    }
+
+    err = init_multiple_servos();
+    if(err!=ESP_OK)
+    {
+        ESP_LOGE(TAG, "Servo configuration failed");
+        vTaskDelete(NULL);
+    }
+    return ESP_OK;
 }
