@@ -36,10 +36,11 @@ static void close_servo_callback(TimerHandle_t xTimer) {
   ServoId_t servo_id = (ServoId_t)pvTimerGetTimerID(xTimer);
   Servo_t *servo_ptr = &servos[servo_id];
 
-  // Move servo to closed position
   if (mcpwm_comparator_set_compare_value(servo_ptr->comparator, angle_to_duty_us(VALVE_CLOSE_POSITION)) != ESP_OK) {
     ESP_LOGE(TAG, "Failed to close servo %d", servo_id);
   } else {
+    servo_ptr->state.state = SERVO_CLOSED;
+    servo_ptr->state.angle = VALVE_CLOSE_POSITION;
     ESP_LOGI(TAG, "Servo %d closed after timeout", servo_id);
   }
 }
@@ -145,6 +146,8 @@ esp_err_t move_servo(ServoId_t servo_id, uint8_t angle, uint16_t open_time_ms) {
     ESP_LOGE(TAG, "Moving servo %d FAILURE", servo_id);
     return ESP_LOG_ERROR;
   }
+  servo_ptr->state.angle = angle;
+  servo_ptr->state.state = SERVO_OPEN;
   if (xTimerIsTimerActive(servo_ptr->close_timer) != pdFALSE) {
     xTimerStop(servo_ptr->close_timer, 0);
   }
@@ -163,7 +166,6 @@ esp_err_t open_servo(ServoId_t servo_id, uint16_t open_time)
     return ESP_LOG_ERROR;
   }
 
-  Servo_t *servo_ptr = &servos[servo_id];
   ESP_LOGI(TAG, "OPENING servo[%d] to angle: %d", servo_id, VALVE_OPEN_POSITION);
 
   if(move_servo(servo_id, VALVE_OPEN_POSITION, open_time)!=ESP_OK)
@@ -184,11 +186,9 @@ esp_err_t close_servo(ServoId_t servo_id)
     return ESP_LOG_ERROR;
   }
 
-  Servo_t *servo_ptr = &servos[servo_id];
   ESP_LOGI(TAG, "CLOSING servo[%d] to angle: %d", servo_id, VALVE_CLOSE_POSITION);
-
-   if (mcpwm_comparator_set_compare_value(servo_ptr->comparator, angle_to_duty_us(VALVE_CLOSE_POSITION)) != ESP_OK) {
-    ESP_LOGE(TAG, "CLOSING servo[%d] FAILURE", servo_id);
+  if(move_servo(servo_id, VALVE_CLOSE_POSITION, MOVE_WITHOUT_TIMER)!=ESP_OK)
+  {
     return ESP_LOG_ERROR;
   }
   ESP_LOGI(TAG, "CLOSED servo[%d] to angle: %d", servo_id, VALVE_CLOSE_POSITION);

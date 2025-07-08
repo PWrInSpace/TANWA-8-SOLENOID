@@ -25,11 +25,22 @@
 
 #define VALVE_CLOSE_POSITION 115U
 #define VALVE_OPEN_POSITION 1U
+#define MOVE_WITHOUT_TIMER (uint16_t)0
 
 #include "driver/mcpwm_prelude.h"
 #include "esp_log.h"
 #include <freertos/FreeRTOS.h>
 #include <freertos/timers.h>
+
+typedef enum{
+  SERVO_OPEN,
+  SERVO_CLOSED
+}Servo_state_t;
+
+typedef struct{
+  uint8_t angle;
+  Servo_state_t state;
+}Servo_work_state_t;
 /************************** SERVO IDENTIFIERS ********************************/
 
 typedef enum {
@@ -45,7 +56,7 @@ typedef struct Servo {
     mcpwm_oper_handle_t oper;
     mcpwm_cmpr_handle_t comparator;
     mcpwm_gen_handle_t generator;
-    uint8_t angle;
+    Servo_work_state_t state;
     TimerHandle_t close_timer;
 } Servo_t;
 

@@ -21,6 +21,7 @@
 /* TMP1075 REGISTERS */
 #define TMP1075_REG_TEMP 0x00
 #define TMP1075_REG_CONFIG 0x01
+#define TMP1075_NUM 2
 
 typedef enum {
     TMP1075_FAULT_1 = 0b00,

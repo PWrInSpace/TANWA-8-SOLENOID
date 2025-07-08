@@ -9,6 +9,7 @@
 #include "Solenoid.h"
 #include "solenoid_config.h"
 #include "servo_config.h"
+#include "BoardData.h"
 
 #define TAG "CAN_CONFIG"
 
