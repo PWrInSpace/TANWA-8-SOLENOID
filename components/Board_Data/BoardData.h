@@ -7,6 +7,7 @@
 
 typedef struct {
     Valve valves[NUM_OF_SOLENOIDS];
+    float temperature[2];
 } BoardData_t;
 
 extern BoardData_t BoardData;

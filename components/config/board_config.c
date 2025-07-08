@@ -25,6 +25,8 @@
 #include "console_config.h"
 #include "solenoid_config.h"
 #include "servo_config.h"
+#include "mcu_i2c_config.h"
+
 
 #define TAG "BOARD_CONFIG"
 
@@ -41,6 +43,20 @@ board_config_t config = {
         .drive = LED_DRIVE_POSITIVE,
         .state = LED_STATE_OFF, 
     },
+    .tmp1075 = {
+        {
+            ._i2c_write = _mcu_i2c_write,
+            ._i2c_read = _mcu_i2c_read,
+            .i2c_address = 0x48,
+            .config_register = 0,
+        },
+        {
+            ._i2c_write = _mcu_i2c_write,
+            ._i2c_read = _mcu_i2c_read,
+            .i2c_address = 0x49,
+            .config_register = 0,
+        },
+},
 };
 
 esp_err_t board_config_init(void) {

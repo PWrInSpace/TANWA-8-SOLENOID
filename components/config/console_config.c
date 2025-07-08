@@ -6,6 +6,8 @@
 #include "servo_control.h"
 #include "solenoid_config.h"
 #include "Solenoid.h"
+#include "tmp1075.h"
+
 #define TAG "CONSOLE_CONFIG"
 
 static int reset_device(int argc, char **argv) {
