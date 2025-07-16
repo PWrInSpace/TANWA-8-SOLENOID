@@ -91,5 +91,6 @@ esp_err_t move_servo(ServoId_t servo_id, uint8_t angle, uint16_t open_time_ms);
 
  esp_err_t open_servo(ServoId_t servo_id, uint16_t open_time_ms);
  esp_err_t close_servo(ServoId_t servo_id);
+ void servo_123();
 
 #endif // SERVO_CONTROL_HH

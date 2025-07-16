@@ -57,13 +57,41 @@ esp_err_t servo_close_callbak(uint8_t *data, uint8_t length) {
     return close_servo(servo);
 }
 
+esp_err_t get_board_data_callback(uint8_t *data, uint8_t length) {
+    if (!data || length == 0) {
+        return ESP_ERR_INVALID_ARG;
+    }
+    ServoId_t servo = data[0];
+    return close_servo(servo);
+}
+
+esp_err_t reset_callback(uint8_t *data, uint8_t length) {
+    if (!data || length == 0) {
+        return ESP_ERR_INVALID_ARG;
+    }
+    ServoId_t servo = data[0];
+    return close_servo(servo);
+}
+
+esp_err_t status_callback(uint8_t *data, uint8_t length) {
+    if (!data || length == 0) {
+        return ESP_ERR_INVALID_ARG;
+    }
+    ServoId_t servo = data[0];
+    return close_servo(servo);
+}
+
 can_command_t can_commands[] = {
     // Example command registration
+    {CAN_GET_STATUS, status_callback},
+    {CAN_GET_BOARD_DATA, get_board_data_callback},
     {CAN_TEMPLATE_MESSAGE_ID, new_command_handler},
-    {CAN_OPEN_SOL_ID , sol_open_callback},
-    {CAN_CLOSE_SOL_ID , sol_close_callback},
-    {CAN_OPEN_SERVO_ID , servo_open_callbak},
-    {CAN_CLOSE_SERVO_ID , servo_close_callbak}
+    {CAN_OPEN_SOLENOID , sol_open_callback},
+    {CAN_CLOSE_SOLENOID , sol_close_callback},
+    {CAN_OPEN_SERVO , servo_open_callbak},
+    {CAN_CLOSE_SERVO , servo_close_callbak},
+    {CAN_MOVE_SERVO , servo_close_callbak},
+    {RESET, reset_callback}
 };
 
 esp_err_t can_config_init(void) {
