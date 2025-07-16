@@ -92,8 +92,10 @@ esp_err_t send_board_data_callback(uint8_t *data, uint8_t len)
     twai_message_t tx_msg = {
         .identifier = CAN_SEND_BOARD_DATA,
         .data_length_code = 8,
-        .data = {0} // Initialize data array to 0
+        .data = {0},
+        .extd = 1
     };
+
     uint8_t sol_status = 0;
     uint8_t servo_status = 0;
     esp_err_t ret = ESP_OK;
@@ -162,6 +164,7 @@ esp_err_t send_status_callback(uint8_t *data, uint8_t length) {
     // Insert the int16_t value into the data array starting at index x
 
     tx_msg.data_length_code = 8;
+    tx_msg.extd = 1;
     data_send[0] = temperature_celsius[1];
     data_send[1] = temperature_celsius[1];
 
