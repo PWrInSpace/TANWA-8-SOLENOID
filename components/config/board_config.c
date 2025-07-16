@@ -70,6 +70,13 @@ esp_err_t board_config_init(void) {
         return err;
     }
 
+    err = mcu_i2c_init();
+
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "I2C initialization failed");
+        return err;
+    }
+
     err = mcu_twai_init();
 
     if (err != ESP_OK) {
