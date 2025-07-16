@@ -7,7 +7,7 @@
 #include "servo_config.h"
 
 
-typedef struct {
+typedef struct {                
     float temperature[2];
     Servo_work_state_t servo_states[SERVO_COUNT];
     ValveState solenoid_states[NUM_OF_SOLENOIDS];

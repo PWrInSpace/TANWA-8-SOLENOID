@@ -27,3 +27,13 @@ void data_board_task(void *arg) {
 
     vTaskDelete(NULL); // Delete task when done, if intended to run once
 }
+
+esp_err_t board_data_task_init(void) {
+
+    if(xTaskCreatePinnedToCore(data_board_task, "Board Data Task", 4096, NULL, 4, NULL, 1) != pdPASS) {
+        ESP_LOGE(TAG, "Failed to create CAN task");
+        return ESP_FAIL;
+    }
+
+    return ESP_OK;
+}

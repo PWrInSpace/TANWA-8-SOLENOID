@@ -9,6 +9,7 @@
 #include "app_task.h"
 #include "console_config.h"
 #include "console.h"
+#include "data_board_task.h"
 
 #define SETUP_TASK_STACK_SIZE CONFIG_SETUP_TASK_STACK_SIZE
 #define SETUP_TASK_PRIORITY CONFIG_SETUP_TASK_PRIORITY
@@ -31,6 +32,12 @@ void setup_task(void *arg) {
  //    Start the app task
     if(app_task_init() != ESP_OK) {
         ESP_LOGE(TAG, "Failed to initialize app task");
+        vTaskDelete(NULL);
+    }
+
+    if(board_data_task_init() != ESP_OK)
+    {
+        ESP_LOGE(TAG, "Failed to initialize Board Data Task");
         vTaskDelete(NULL);
     }
   ESP_LOGI(TAG, "SETUP DONE");
