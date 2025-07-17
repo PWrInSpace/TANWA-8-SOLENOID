@@ -29,6 +29,7 @@ esp_err_t can_start(void) {
     esp_err_t err;
 
     // Start the TWAI driver
+    vTaskDelay(500 / portTICK_PERIOD_MS); // Allow time for the driver to initialize
     err = twai_start();
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "Failed to start TWAI driver: %s", esp_err_to_name(err));
@@ -67,10 +68,13 @@ esp_err_t can_send_message(uint32_t id, uint8_t *data, uint8_t length) {
     memcpy(message.data, data, length);
 
     // Send the message
-    err = twai_transmit(&message, pdMS_TO_TICKS(10));
+    err = twai_transmit(&message, pdMS_TO_TICKS(100));
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "Failed to send CAN message: %s", esp_err_to_name(err));
         return err;
+    }
+    else {
+        ESP_LOGI(TAG, "CAN message sent with ID: 0x%03X", id);
     }
 
     return ESP_OK;
@@ -121,6 +125,8 @@ void can_task(void *arg) {
         } else if (err != ESP_ERR_TIMEOUT) {
             ESP_LOGE(TAG, "Failed to receive CAN message: %s", esp_err_to_name(err));
         }
+
+        vTaskDelay(pdMS_TO_TICKS(10)); // Adjust delay as needed
     }
 }
 

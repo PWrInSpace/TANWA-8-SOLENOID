@@ -26,6 +26,7 @@
 #include "solenoid_config.h"
 #include "servo_config.h"
 #include "mcu_i2c_config.h"
+#include "BoardData.h"
 
 
 #define TAG "BOARD_CONFIG"
@@ -112,6 +113,12 @@ esp_err_t board_config_init(void) {
     {
         ESP_LOGE(TAG, "Servo configuration failed");
         vTaskDelete(NULL);
+    }
+
+    err = board_data_init();
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "Board data initialization failed");
+        return err;
     }
     return ESP_OK;
 }

@@ -3,8 +3,8 @@
 
 #define TAG "servo_config.c"
 Servo_t servos[SERVO_COUNT] = {
-    [N20_FILL_SERVO] = SERVO_INIT(18),
-    [N2_FILL_SERVO] = SERVO_INIT(19)
+    [N20_FILL_SERVO] = SERVO_INIT(15),
+    [N2_FILL_SERVO] = SERVO_INIT(7)
 };
 
 esp_err_t init_multiple_servos()

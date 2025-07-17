@@ -24,6 +24,7 @@ esp_err_t new_command_handler(uint8_t *data, uint8_t length) {
 }
 
 esp_err_t sol_open_callback(uint8_t *data, uint8_t length) {
+    ESP_LOGI(TAG, "Solenoid open command received");
     if (!data || length == 0 || *data >= NUM_OF_SOLENOIDS) {
         return ESP_ERR_INVALID_ARG;
     }
@@ -32,6 +33,7 @@ esp_err_t sol_open_callback(uint8_t *data, uint8_t length) {
 }
 
 esp_err_t sol_close_callback(uint8_t *data, uint8_t length) {
+    ESP_LOGI(TAG, "Solenoid close command received");
     if (!data || length == 0 || *data >= NUM_OF_SOLENOIDS) {
         return ESP_ERR_INVALID_ARG;
     }
@@ -49,14 +51,6 @@ esp_err_t servo_open_callbak(uint8_t *data, uint8_t length) {
 }
 
 esp_err_t servo_close_callbak(uint8_t *data, uint8_t length) {
-    if (!data || length == 0) {
-        return ESP_ERR_INVALID_ARG;
-    }
-    ServoId_t servo = data[0];
-    return close_servo(servo);
-}
-
-esp_err_t get_board_data_callback(uint8_t *data, uint8_t length) {
     if (!data || length == 0) {
         return ESP_ERR_INVALID_ARG;
     }
@@ -93,7 +87,7 @@ esp_err_t send_board_data_callback(uint8_t *data, uint8_t len)
         .identifier = CAN_SEND_BOARD_DATA,
         .data_length_code = 8,
         .data = {0},
-        .extd = 1
+        //.extd = 1
     };
 
     uint8_t sol_status = 0;
@@ -143,10 +137,11 @@ esp_err_t send_board_data_callback(uint8_t *data, uint8_t len)
         return ESP_ERR_TIMEOUT;
     }
 
+    ret = twai_transmit(&tx_msg, pdMS_TO_TICKS(100));
     // Transmit CAN message
-    if (twai_transmit(&tx_msg, pdMS_TO_TICKS(100)) != ESP_OK)
+    if (ret != ESP_OK)
     {
-        ESP_LOGE(TAG, "Failed to transmit CAN message");
+        ESP_LOGE(TAG, "Failed to transmit CAN message %s", esp_err_to_name(ret));
         return ESP_FAIL;
     }
 
@@ -165,31 +160,31 @@ esp_err_t send_status_callback(uint8_t *data, uint8_t length) {
 
     tx_msg.data_length_code = 8;
     tx_msg.extd = 1;
-    data_send[0] = temperature_celsius[1];
-    data_send[1] = temperature_celsius[1];
+    data_send[0] = temperature_celsius[0];
+    data_send[1] = temperature_celsius[0];
 
-    memcpy(tx_msg.data, data_send, tx_msg.data_length_code);
+    ESP_LOGI(TAG, "Sending status with temperature: %d", temperature_celsius[0]);
 
-    if (twai_transmit(&tx_msg, pdMS_TO_TICKS(100)) != ESP_OK)
-    {
-        ESP_LOGE(TAG, "TRANSMIT TEMP_STAT CELSIUS FAIL");
-        return ESP_FAIL;
+    esp_err_t ret = can_send_message(tx_msg.identifier, data_send, tx_msg.data_length_code);
+    ESP_LOGI(TAG, "Status sent with temperature: %d", temperature_celsius[0]);
+    if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to send CAN message: %s", esp_err_to_name(ret));
+        return ret;
     }
+
     return ESP_OK;
 }
 
 can_command_t can_commands[] = {
     // Example command registration,
-    {CAN_GET_BOARD_DATA, get_board_data_callback},
-    {CAN_TEMPLATE_MESSAGE_ID, new_command_handler},
+    {CAN_GET_BOARD_DATA, send_board_data_callback},
+    {CAN_GET_STATUS, send_status_callback},
     {CAN_OPEN_SOLENOID , sol_open_callback},
     {CAN_CLOSE_SOLENOID , sol_close_callback},
     {CAN_OPEN_SERVO , servo_open_callbak},
     {CAN_CLOSE_SERVO , servo_close_callbak},
     {CAN_MOVE_SERVO , servo_close_callbak},
     {RESET, reset_callback},
-    {CAN_SEND_STATUS, send_status_callback},
-    {CAN_SEND_BOARD_DATA, send_board_data_callback}
 };
 
 esp_err_t can_config_init(void) {
@@ -203,12 +198,23 @@ esp_err_t can_config_init(void) {
         return err;
     }
 
-    // Initialize CAN driver
-    err = can_task_init();
+    gpio_config_t io_config = {
+        .mode = GPIO_MODE_INPUT_OUTPUT,
+        .pull_up_en = GPIO_PULLUP_DISABLE,
+        .pull_down_en = GPIO_PULLDOWN_DISABLE,
+        .intr_type = GPIO_INTR_DISABLE,
+        .pin_bit_mask = 1ULL << 8,
+    };
+
+    // Configure GPIO for CAN
+    err = gpio_config(&io_config);
     if (err != ESP_OK) {
-        ESP_LOGE(TAG, "CAN driver initialization failed");
+        ESP_LOGE(TAG, "GPIO configuration failed: %s", esp_err_to_name(err));
         return err;
     }
+
+    gpio_set_level(8, 0); // Set GPIO 37 to low
+
 
     // Start CAN driver
     err = can_start();
@@ -216,6 +222,14 @@ esp_err_t can_config_init(void) {
         ESP_LOGE(TAG, "CAN driver start failed");
         return err;
     }
+
+    // Initialize CAN driver
+    err = can_task_init();
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "CAN driver initialization failed");
+        return err;
+    }
+
 
     return ESP_OK;
 }
