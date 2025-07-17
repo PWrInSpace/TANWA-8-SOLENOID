@@ -4,6 +4,7 @@
 
 #include "esp_log.h"
 #include "esp_err.h"
+#include "esp_timer.h"
 
 #include "driver/twai.h"
 #include "Solenoid.h"
@@ -23,13 +24,62 @@ esp_err_t new_command_handler(uint8_t *data, uint8_t length) {
     return ESP_OK;
 }
 
+void timer_callback(void *arg) {
+    ValveName *valve_name = (ValveName *)arg;
+    if (valve_name == NULL) {
+        ESP_LOGE(TAG, "Timer callback received NULL argument");
+        return;
+    }
+    // Close the solenoid after the timeout
+    esp_err_t err = set_valve_state(*valve_name, VALVE_OFF);
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to close solenoid %d: %s", *valve_name, esp_err_to_name(err));
+    } else {
+        ESP_LOGI(TAG, "Solenoid %d closed after timeout", *valve_name);
+    }
+
+    free(valve_name); // Free the allocated memory for the valve name
+}
+
+
 esp_err_t sol_open_callback(uint8_t *data, uint8_t length) {
     ESP_LOGI(TAG, "Solenoid open command received");
     if (!data || length == 0 || *data >= NUM_OF_SOLENOIDS) {
         return ESP_ERR_INVALID_ARG;
     }
 
-    return set_valve_state((ValveName)(*data), VALVE_ON);
+    if(length == 1){
+        return set_valve_state((ValveName)(*data), VALVE_ON);
+    }
+    else if(length == 3) {
+        ValveName valve_name = (ValveName)(*data);
+        uint16_t open_time_ms = (uint16_t)(data[1] | (data[2] << 8));
+       // Przygotuj argument dla timera
+        ValveName *timer_arg = malloc(sizeof(ValveName));
+        if (!timer_arg) {
+            return ESP_ERR_NO_MEM;
+        }
+        *timer_arg = valve_name;
+
+        // Utwórz i uruchom jednorazowy timer
+        const esp_timer_create_args_t timer_args = {
+            .callback = timer_callback,
+            .arg = timer_arg,
+            .name = "sol_timer"
+        };
+        esp_timer_handle_t timer_handle;
+        if (esp_timer_create(&timer_args, &timer_handle) != ESP_OK) {
+            free(timer_arg);
+            ESP_LOGE(TAG, "Failed to create timer");
+            return ESP_ERR_NO_MEM;
+        }
+        esp_timer_start_once(timer_handle, open_time_ms * 1000); // czas w mikrosekundach
+
+        return ESP_OK;
+    } else {
+        ESP_LOGE(TAG, "Invalid command length for solenoid open");
+        return ESP_ERR_INVALID_ARG;
+    }
 }
 
 esp_err_t sol_close_callback(uint8_t *data, uint8_t length) {
