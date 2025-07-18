@@ -6,23 +6,30 @@
 
 void data_board_task(void *arg) {
     // Take semaphore with timeout
-    if (xSemaphoreTake(BoardDataSemaphore, pdMS_TO_TICKS(1000)) == pdTRUE) {
-        // Copy solenoid states
-        for (int i = 0; i < NUM_OF_SOLENOIDS; i++) 
-        {
-                BoardData.solenoid_states[i] = valves[i].state;
-        }
+    while (1)
+    {
+    
+        if (xSemaphoreTake(BoardDataSemaphore, pdMS_TO_TICKS(1000)) == pdTRUE) {
+            // Copy solenoid states
+            for (int i = 0; i < NUM_OF_SOLENOIDS; i++) 
+            {
+                    BoardData.solenoid_states[i] = valves[i].state;
+                    //ESP_LOGI(TAG, "Solenoid %d state: %d", i, BoardData.solenoid_states[i]);
+            }
 
-        // Copy servo states and angles
-        for (int i = 0; i < SERVO_COUNT; i++) {
-            BoardData.servo_states[i].state = servos[i].state.state;
-            BoardData.servo_states[i].angle= servos[i].state.angle;
-        }
+            // Copy servo states and angles
+            for (int i = 0; i < SERVO_COUNT; i++) {
+                BoardData.servo_states[i].state = servos[i].state.state;
+                BoardData.servo_states[i].angle= servos[i].state.angle;
+                //ESP_LOGI(TAG, "Servo %d state: %d, angle: %d", i, BoardData.servo_states[i].state, BoardData.servo_states[i].angle);
+            }
 
-        // Release semaphore
-        xSemaphoreGive(BoardDataSemaphore);
-    } else {
-        ESP_LOGE(TAG, "Failed to take BoardDataSemaphore");
+            // Release semaphore
+            xSemaphoreGive(BoardDataSemaphore);
+        } else {
+            ESP_LOGE(TAG, "Failed to take BoardDataSemaphore");
+        }
+        vTaskDelay(pdMS_TO_TICKS(50)); // Delay to avoid busy-waiting
     }
 
     vTaskDelete(NULL); // Delete task when done, if intended to run once

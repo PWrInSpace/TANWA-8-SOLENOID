@@ -132,12 +132,12 @@ esp_err_t parse_bool_to_uint8_t(const bool *states, uint8_t num_states, uint8_t 
 // Modified callback function to match can_command_t handler signature
 esp_err_t send_board_data_callback(uint8_t *data, uint8_t len)
 {
-    printf("SEND BOARD DATA\n");
+    //printf("SEND BOARD DATA\n");
     twai_message_t tx_msg = {
         .identifier = CAN_SEND_BOARD_DATA,
         .data_length_code = 8,
         .data = {0},
-        //.extd = 1
+        .extd = 1
     };
 
     uint8_t sol_status = 0;
@@ -149,7 +149,7 @@ esp_err_t send_board_data_callback(uint8_t *data, uint8_t len)
         // Parse solenoid states
         bool solenoid_state_values[NUM_OF_SOLENOIDS];
         for (int i = 0; i < NUM_OF_SOLENOIDS; i++) {
-            solenoid_state_values[i] = (BoardData.solenoid_states[i] != 0); // Convert ValveState to bool
+            solenoid_state_values[i] = (BoardData.solenoid_states[i] != VALVE_OFF); // Convert ValveState to bool
         }
         ret = parse_bool_to_uint8_t(solenoid_state_values, NUM_OF_SOLENOIDS, &sol_status);
         if (ret != ESP_OK) {
@@ -158,10 +158,12 @@ esp_err_t send_board_data_callback(uint8_t *data, uint8_t len)
             return ret;
         }
 
+        //ESP_LOGI(TAG, "Solenoid status: %02X", sol_status);
+
         // Parse servo states
         bool servo_state_values[SERVO_COUNT];
         for (int i = 0; i < SERVO_COUNT; i++) {
-            servo_state_values[i] = BoardData.servo_states[i].state;
+            servo_state_values[i] = (BoardData.servo_states[i].state != SERVO_CLOSED); // Convert Servo_state_t to bool
         }
         ret = parse_bool_to_uint8_t(servo_state_values, SERVO_COUNT, &servo_status);
         if (ret != ESP_OK) {
@@ -170,12 +172,12 @@ esp_err_t send_board_data_callback(uint8_t *data, uint8_t len)
             return ret;
         }
 
+        //ESP_LOGI(TAG, "Servo status: %02X", servo_status);
+
         tx_msg.data[0] = sol_status;
         tx_msg.data[1] = servo_status;
         tx_msg.data[2] = BoardData.servo_states[0].angle;
         tx_msg.data[3] = BoardData.servo_states[1].angle;
-        tx_msg.data[4] = BoardData.servo_states[2].angle;
-        tx_msg.data[5] = BoardData.servo_states[3].angle;
         // Use temperature data from BoardData
         tx_msg.data[6] = 1;
         tx_msg.data[7] = 1;
@@ -199,7 +201,7 @@ esp_err_t send_board_data_callback(uint8_t *data, uint8_t len)
 }
 
 esp_err_t send_status_callback(uint8_t *data, uint8_t length) {
-    printf("SEND BOARD STATUS\n");
+    //printf("SEND BOARD STATUS\n");
     twai_message_t tx_msg;
     tx_msg.identifier = CAN_SEND_STATUS;
 
@@ -213,10 +215,10 @@ esp_err_t send_status_callback(uint8_t *data, uint8_t length) {
     data_send[0] = temperature_celsius[0];
     data_send[1] = temperature_celsius[0];
 
-    ESP_LOGI(TAG, "Sending status with temperature: %d", temperature_celsius[0]);
+    //ESP_LOGI(TAG, "Sending status with temperature: %d", temperature_celsius[0]);
 
     esp_err_t ret = can_send_message(tx_msg.identifier, data_send, tx_msg.data_length_code);
-    ESP_LOGI(TAG, "Status sent with temperature: %d", temperature_celsius[0]);
+    //ESP_LOGI(TAG, "Status sent with temperature: %d", temperature_celsius[0]);
     if (ret != ESP_OK) {
         ESP_LOGE(TAG, "Failed to send CAN message: %s", esp_err_to_name(ret));
         return ret;
@@ -247,23 +249,6 @@ esp_err_t can_config_init(void) {
         ESP_LOGE(TAG, "CAN command registration failed");
         return err;
     }
-
-    gpio_config_t io_config = {
-        .mode = GPIO_MODE_INPUT_OUTPUT,
-        .pull_up_en = GPIO_PULLUP_DISABLE,
-        .pull_down_en = GPIO_PULLDOWN_DISABLE,
-        .intr_type = GPIO_INTR_DISABLE,
-        .pin_bit_mask = 1ULL << 8,
-    };
-
-    // Configure GPIO for CAN
-    err = gpio_config(&io_config);
-    if (err != ESP_OK) {
-        ESP_LOGE(TAG, "GPIO configuration failed: %s", esp_err_to_name(err));
-        return err;
-    }
-
-    gpio_set_level(8, 0); // Set GPIO 37 to low
 
 
     // Start CAN driver

@@ -43,6 +43,10 @@ esp_err_t set_valve_state(int name, ValveState state) {
     }
 
     esp_err_t err = gpio_set_level(valves[name].gpio_pin, state);
+
+    if(err == ESP_OK) {
+        valves[name].state = state;
+    }
     
     return err;
 }

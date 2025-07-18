@@ -73,9 +73,6 @@ esp_err_t can_send_message(uint32_t id, uint8_t *data, uint8_t length) {
         ESP_LOGE(TAG, "Failed to send CAN message: %s", esp_err_to_name(err));
         return err;
     }
-    else {
-        ESP_LOGI(TAG, "CAN message sent with ID: 0x%03X", id);
-    }
 
     return ESP_OK;
 }
