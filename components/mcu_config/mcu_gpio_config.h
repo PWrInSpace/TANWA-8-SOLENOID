@@ -22,11 +22,13 @@
 //ADD CONFIGURED GPIO PINS HERE
 typedef enum {
     LED_GPIO = CONFIG_GPIO_LED,
+    CAN_STB = 8
 } mcu_gpio_cfg_t;
 
 // ADD GPIO PINS INDICES HERE
 typedef enum {
     LED_GPIO_INDEX = 0,
+    CAN_STBB,
     MAX_GPIO_INDEX
 } mcu_gpio_index_cfg_t;
 

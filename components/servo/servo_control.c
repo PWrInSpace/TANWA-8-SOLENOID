@@ -19,7 +19,10 @@
 /************************** PRIVATE VARIABLES *******************************/
 
 static const char *TAG = "SERVO CONTROL";
-
+static bool opened = 0;
+ TickType_t ticks1 = 0;
+ TickType_t ticks2 = 0;
+ TickType_t ticks_elapsed = 0;
 // Servo configurations
 
 /************************** PRIVATE FUNCTIONS *******************************/
@@ -41,7 +44,7 @@ static void close_servo_callback(TimerHandle_t xTimer) {
   } else {
     servo_ptr->state.state = SERVO_CLOSED;
     servo_ptr->state.angle = VALVE_CLOSE_POSITION;
-    ESP_LOGI(TAG, "Servo %d closed after timeout", servo_id);
+    gpio_set_level(46, 0);
   }
 }
 /************************** CODE *********************************************/
@@ -111,11 +114,11 @@ uint16_t servo_init(ServoId_t servo_id) {
 
 
   servo_ptr->close_timer = xTimerCreate(
-      "CLOSE_SERVO_TIMER",              // Timer name
-      pdMS_TO_TICKS(1000),    // Default period (will be updated in move_servo)
-      pdFALSE,                // One-shot timer (not auto-reload)
-      (void *)(intptr_t)servo_id, // Timer ID (servo_id)
-      close_servo_callback     // Callback function
+      "CLOSE_SERVO_TIMER",
+      pdMS_TO_TICKS(1000),
+      pdFALSE,
+      (void *)(intptr_t)servo_id,
+      close_servo_callback 
   );
   if (servo_ptr->close_timer == NULL) {
     ESP_LOGE(TAG, "Failed to create timer for servo %d", servo_id);
@@ -151,8 +154,13 @@ esp_err_t move_servo(ServoId_t servo_id, uint8_t angle, uint16_t open_time_ms) {
   if (xTimerIsTimerActive(servo_ptr->close_timer) != pdFALSE) {
     xTimerStop(servo_ptr->close_timer, 0);
   }
-  if (open_time_ms > 0) {
+  ticks1 = xTaskGetTickCount();
+  if (open_time_ms > 0) 
+  {
     xTimerChangePeriod(servo_ptr->close_timer, pdMS_TO_TICKS(open_time_ms), 0);
+    uint32_t period_ms = (xTimerGetPeriod(servo_ptr->close_timer) * portTICK_PERIOD_MS);
+    printf("TIMER TIME : %d", period_ms);
+    gpio_set_level(46, 1);
     xTimerStart(servo_ptr->close_timer, 0);
   }
 
@@ -161,6 +169,7 @@ esp_err_t move_servo(ServoId_t servo_id, uint8_t angle, uint16_t open_time_ms) {
 
 esp_err_t open_servo(ServoId_t servo_id, uint16_t open_time)
 {
+  printf("TICKS ELAPSED = %d\n", ticks_elapsed);
   if (servo_id >= SERVO_COUNT) {
     ESP_LOGE(TAG, "Invalid servo ID: %d", servo_id);
     return ESP_LOG_ERROR;
@@ -174,9 +183,13 @@ esp_err_t open_servo(ServoId_t servo_id, uint16_t open_time)
   }
   ESP_LOGI(TAG, "OPENED servo[%d] to angle: %d for time ms: %d", servo_id, VALVE_OPEN_POSITION, open_time);
 
-  
-
+  if(!opened)
+  {
+    return ESP_FAIL;
+  }
+printf("Opened servo timestamp\n");
   return ESP_OK;
+  
 }
 
 esp_err_t close_servo(ServoId_t servo_id)
