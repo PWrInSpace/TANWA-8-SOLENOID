@@ -78,6 +78,12 @@ esp_err_t board_config_init(void) {
         return err;
     }
 
+    err = board_data_init();
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "Board data initialization failed");
+        return err;
+    }
+
     err = mcu_twai_init();
 
     if (err != ESP_OK) {
@@ -115,10 +121,5 @@ esp_err_t board_config_init(void) {
         vTaskDelete(NULL);
     }
 
-    err = board_data_init();
-    if (err != ESP_OK) {
-        ESP_LOGE(TAG, "Board data initialization failed");
-        return err;
-    }
     return ESP_OK;
 }
