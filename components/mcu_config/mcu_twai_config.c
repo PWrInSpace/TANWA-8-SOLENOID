@@ -26,7 +26,12 @@ mcu_twai_config_t mcu_twai_config = {
         .intr_flags = ESP_INTR_FLAG_LEVEL1,
     },
     .t_config = TWAI_TIMING_CONFIG_500KBITS(),
-    .f_config = TWAI_FILTER_CONFIG_ACCEPT_ALL(),
+    //.f_config = TWAI_FILTER_CONFIG_ACCEPT_ALL(), // Accept all messages for now
+    .f_config = {
+      .acceptance_code =   0x0C00 << 3, // 0x0C00 is the standard CAN ID for board data
+      .acceptance_mask = ~(0x0F00 << 3), // Accept all messages
+      .single_filter = true // Allow multiple filters
+    },
 };
 
 esp_err_t mcu_twai_init() {

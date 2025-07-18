@@ -113,7 +113,7 @@ void can_task(void *arg) {
 
     while (1) {
         // Receive a message
-        err = twai_receive(&message, pdMS_TO_TICKS(10));
+        err = twai_receive(&message, pdMS_TO_TICKS(100));
         if (err == ESP_OK) {
             // Process the received message
             for (size_t i = 0; i < gb.num_commands; i++) {
