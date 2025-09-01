@@ -24,6 +24,8 @@ static bool opened = 0;
  TickType_t ticks2 = 0;
  TickType_t ticks_elapsed = 0;
 // Servo configurations
+mcpwm_timer_handle_t timers[2];
+mcpwm_oper_handle_t operators[2];
 
 /************************** PRIVATE FUNCTIONS *******************************/
 
@@ -39,12 +41,12 @@ static void IRAM_ATTR close_servo_callback(TimerHandle_t xTimer) {
   ServoId_t servo_id = (ServoId_t)pvTimerGetTimerID(xTimer);
   Servo_t *servo_ptr = &servos[servo_id];
 
-  if (mcpwm_comparator_set_compare_value(servo_ptr->comparator, angle_to_duty_us(VALVE_CLOSE_POSITION)) != ESP_OK) {
+  if (mcpwm_comparator_set_compare_value(servo_ptr->comparator, angle_to_duty_us(servo_ptr->close_angle)) != ESP_OK) {
     ESP_LOGE(TAG, "Failed to close servo %d", servo_id);
   } else {
     //ESP_LOGI(TAG, "Closed servo[%d] to angle: %d", servo_id, VALVE_CLOSE_POSITION);
     servo_ptr->state.state = SERVO_CLOSED;
-    servo_ptr->state.angle = VALVE_CLOSE_POSITION;
+    servo_ptr->state.angle = servo_ptr->close_angle;
     gpio_set_level(46, 0);
   }
 }
@@ -59,25 +61,30 @@ uint16_t servo_init(ServoId_t servo_id) {
   Servo_t *servo_ptr = &servos[servo_id];
   servo_ptr->state.state = SERVO_CLOSED;
 
-  // Create timer
-  mcpwm_timer_config_t timer_config = {
-      .group_id = servo_id, // Use unique group ID for each servo
-      .clk_src = MCPWM_TIMER_CLK_SRC_DEFAULT,
-      .resolution_hz = SERVO_FREQUENCY_HZ,
-      .period_ticks = SERVO_TIMEBASE_PERIOD,
-      .count_mode = MCPWM_TIMER_COUNT_MODE_UP,
-  };
-  ESP_ERROR_CHECK(mcpwm_new_timer(&timer_config, &servo_ptr->timer));
-
-  // Create operator
-  mcpwm_operator_config_t operator_config = {
-      .group_id = servo_id, // Operator in the same group as the timer
-  };
-  ESP_ERROR_CHECK(mcpwm_new_operator(&operator_config, &servo_ptr->oper));
-
-  // Connect operator to timer
-  ESP_ERROR_CHECK(
-      mcpwm_operator_connect_timer(servo_ptr->oper, servo_ptr->timer));
+  uint8_t group = servo_id % 2;
+  if (timers[group] == NULL) {
+      // Tworzymy timer tylko raz na grupę
+      mcpwm_timer_config_t timer_config = {
+            .group_id = group,
+          .clk_src = MCPWM_TIMER_CLK_SRC_DEFAULT,
+          .resolution_hz = SERVO_FREQUENCY_HZ,
+          .period_ticks = SERVO_TIMEBASE_PERIOD,
+          .count_mode = MCPWM_TIMER_COUNT_MODE_UP,
+      };
+      ESP_ERROR_CHECK(mcpwm_new_timer(&timer_config, &timers[group]));
+      ESP_ERROR_CHECK(mcpwm_timer_enable(timers[group]));
+      ESP_ERROR_CHECK(mcpwm_timer_start_stop(timers[group], MCPWM_TIMER_START_NO_STOP));
+  }
+  if (operators[group] == NULL) {
+      mcpwm_operator_config_t operator_config = {
+          .group_id = group, // Operator in the same group as the timer
+      };
+      ESP_ERROR_CHECK(mcpwm_new_operator(&operator_config, &operators[group]));
+      ESP_ERROR_CHECK(mcpwm_operator_connect_timer(operators[group], timers[group]));
+  }
+  // Przypisz operator/timer do serwa
+  servo_ptr->timer = timers[group];
+  servo_ptr->oper = operators[group];
 
   // Create comparator
   mcpwm_comparator_config_t comparator_config = {
@@ -95,7 +102,7 @@ uint16_t servo_init(ServoId_t servo_id) {
 
   // Set the initial compare value, so that the servo will spin to the center
   ESP_ERROR_CHECK(mcpwm_comparator_set_compare_value(
-      servo_ptr->comparator, angle_to_duty_us(VALVE_CLOSE_POSITION)));
+      servo_ptr->comparator, angle_to_duty_us(servo_ptr->close_angle)));
 
   // Set generator action on timer and compare event
   // Go high on counter empty
@@ -128,12 +135,6 @@ uint16_t servo_init(ServoId_t servo_id) {
   }
 
 
-  // Enable and start timer
-  ESP_ERROR_CHECK(mcpwm_timer_enable(servo_ptr->timer));
-  ESP_ERROR_CHECK(
-      mcpwm_timer_start_stop(servo_ptr->timer, MCPWM_TIMER_START_NO_STOP));
-
-  ESP_LOGI(TAG, "Servo %d initialized on GPIO %d", servo_id, servo_ptr->pwm_pin);
   return EXIT_SUCCESS;
 }
 
@@ -177,15 +178,15 @@ esp_err_t open_servo(ServoId_t servo_id, uint16_t open_time)
     return ESP_LOG_ERROR;
   }
   Servo_t *servo_ptr = &servos[servo_id];
-  ESP_LOGI(TAG, "OPENING servo[%d] to angle: %d", servo_id, VALVE_OPEN_POSITION);
+  ESP_LOGI(TAG, "OPENING servo[%d] to angle: %d", servo_id, servo_ptr->open_angle);
 
-  if(move_servo(servo_id, VALVE_OPEN_POSITION, open_time)!=ESP_OK)
+  if(move_servo(servo_id, servo_ptr->open_angle, open_time)!=ESP_OK)
   {
     return ESP_LOG_ERROR;
   }
-  ESP_LOGI(TAG, "OPENED servo[%d] to angle: %d for time ms: %d", servo_id, VALVE_OPEN_POSITION, open_time);
+  ESP_LOGI(TAG, "OPENED servo[%d] to angle: %d for time ms: %d", servo_id, servo_ptr->open_angle, open_time);
   servo_ptr->state.state = SERVO_OPEN;
-  servo_ptr->state.angle = VALVE_OPEN_POSITION;
+  servo_ptr->state.angle = servo_ptr->open_angle;
 
   if(!opened)
   {
@@ -203,15 +204,15 @@ esp_err_t close_servo(ServoId_t servo_id)
     return ESP_LOG_ERROR;
   }
 
-  ESP_LOGI(TAG, "CLOSING servo[%d] to angle: %d", servo_id, VALVE_CLOSE_POSITION);
-  if(move_servo(servo_id, VALVE_CLOSE_POSITION, MOVE_WITHOUT_TIMER)!=ESP_OK)
+  ESP_LOGI(TAG, "CLOSING servo[%d] to angle: %d", servo_id, servos[servo_id].close_angle);
+  if(move_servo(servo_id, servos[servo_id].close_angle, MOVE_WITHOUT_TIMER)!=ESP_OK)
   {
     return ESP_LOG_ERROR;
   }
-  ESP_LOGI(TAG, "CLOSED servo[%d] to angle: %d", servo_id, VALVE_CLOSE_POSITION);
+  ESP_LOGI(TAG, "CLOSED servo[%d] to angle: %d", servo_id, servos[servo_id].close_angle);
   Servo_t *servo_ptr = &servos[servo_id];
   servo_ptr->state.state = SERVO_CLOSED;
-  servo_ptr->state.angle = VALVE_CLOSE_POSITION;
+  servo_ptr->state.angle = servo_ptr->close_angle;
 
   return ESP_OK;
 }

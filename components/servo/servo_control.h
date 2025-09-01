@@ -23,8 +23,6 @@
 
 #define DEFAULT_POS_ANGLE 90  // Angle of the default position for servos
 
-#define VALVE_CLOSE_POSITION 115U
-#define VALVE_OPEN_POSITION 1U
 #define MOVE_WITHOUT_TIMER (uint16_t)0
 
 #include "driver/mcpwm_prelude.h"
@@ -46,6 +44,7 @@ typedef struct{
 typedef enum {
     N20_FILL_SERVO,
     N2_FILL_SERVO,
+    N2_FILL_SERVO_2,
     SERVO_COUNT // Number of servos
 } ServoId_t;
 
@@ -58,14 +57,16 @@ typedef struct Servo {
     mcpwm_gen_handle_t generator;
     Servo_work_state_t state;
     TimerHandle_t close_timer;
+    uint16_t open_angle;
+    uint16_t close_angle;
 } Servo_t;
 
 /************************** INIT MACROS **************************************/
 
-#define SERVO_INIT(X)                                              \
+#define SERVO_INIT(X, y, z)                                              \
   {                                                                \
     .pwm_pin = X, .timer = NULL, .oper = NULL, .comparator = NULL, \
-    .generator = NULL                                              \
+    .generator = NULL, .open_angle = y, .close_angle = z           \
   }
 
 

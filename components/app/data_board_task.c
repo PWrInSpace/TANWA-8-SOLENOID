@@ -14,7 +14,7 @@ void data_board_task(void *arg) {
             for (int i = 0; i < NUM_OF_SOLENOIDS; i++) 
             {
                     BoardData.solenoid_states[i] = valves[i].state;
-                    //ESP_LOGI(TAG, "Solenoid %d state: %d", i, BoardData.solenoid_states[i]);
+                    // ESP_LOGI(TAG, "Solenoid %d state: %d", i, BoardData.solenoid_states[i]);
             }
 
             // Copy servo states and angles

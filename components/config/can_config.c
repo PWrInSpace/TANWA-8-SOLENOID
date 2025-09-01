@@ -73,6 +73,7 @@ esp_err_t sol_open_callback(uint8_t *data, uint8_t length) {
             ESP_LOGE(TAG, "Failed to create timer");
             return ESP_ERR_NO_MEM;
         }
+        set_valve_state(valve_name, VALVE_ON); // Open the solenoid immediately
         esp_timer_start_once(timer_handle, open_time_ms * 1000); // czas w mikrosekundach
 
         return ESP_OK;
@@ -205,15 +206,25 @@ esp_err_t send_status_callback(uint8_t *data, uint8_t length) {
     twai_message_t tx_msg;
     tx_msg.identifier = CAN_SEND_STATUS;
 
-    uint8_t temperature_celsius[1] = {55};
+    uint8_t temperature_celsius[2] = {0, 0};
     uint8_t data_send[8] = {0};
 
+    if (xSemaphoreTake(BoardDataSemaphore, pdMS_TO_TICKS(1000)) != pdTRUE) {
+        ESP_LOGE(TAG, "Failed to take BoardDataSemaphore");
+        return ESP_ERR_TIMEOUT;
+    }
+
+    // Assuming temperature is stored in BoardData.temperature
+    temperature_celsius[0] = (uint8_t)(BoardData.temperature[0]);
+    temperature_celsius[1] = (uint8_t)(BoardData.temperature[1]);
     // Insert the int16_t value into the data array starting at index x
+
+    xSemaphoreGive(BoardDataSemaphore);
 
     tx_msg.data_length_code = 8;
     tx_msg.extd = 1;
     data_send[0] = temperature_celsius[0];
-    data_send[1] = temperature_celsius[0];
+    data_send[1] = temperature_celsius[1];
 
     //ESP_LOGI(TAG, "Sending status with temperature: %d", temperature_celsius[0]);
 

@@ -89,7 +89,7 @@ static int servo_close_cli(int argc, char **argv)
     
     ServoId_t servo = atoi(argv[1]);
     close_servo(servo);
-    CONSOLE_WRITE("SERVO_CLOSE SERVO[%d] = %d",servo, VALVE_CLOSE_POSITION);
+    CONSOLE_WRITE("SERVO_CLOSE SERVO[%d] = %d",servo, servos[servo].close_angle);
     return 0;
 }
 
@@ -104,10 +104,10 @@ static int servo_open_cli(int argc, char **argv)
     if (argc >= 3) {
     time_ms = atoi(argv[2]);
     } else {
-    CONSOLE_WRITE("No time_ms provided, servo %d will stay at angle %d", servo, VALVE_OPEN_POSITION);
+    CONSOLE_WRITE("No time_ms provided, servo %d will stay at angle %d", servo, servos[servo].open_angle);
     }
     open_servo(servo, time_ms);
-    CONSOLE_WRITE("OPEN_SERVO SERVO[%d] = %d",servo, VALVE_OPEN_POSITION);
+    CONSOLE_WRITE("OPEN_SERVO SERVO[%d] = %d",servo, servos[servo].open_angle);
     return 0;
 }
 
