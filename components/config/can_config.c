@@ -96,9 +96,16 @@ esp_err_t servo_open_callbak(uint8_t *data, uint8_t length) {
     if (!data || length == 0) {
         return ESP_ERR_INVALID_ARG;
     }
+    // close_servo(1);
+    // vTaskDelay(pdMS_TO_TICKS(100));
+    // close_servo(0);
+
     ServoId_t servo = data[0];
     uint16_t time_ms = (uint16_t)(data[1] | (data[2] << 8));
-    return open_servo(servo, time_ms);
+    open_servo(servo, time_ms);
+
+    return ESP_OK;
+    
 }
 
 esp_err_t servo_close_callbak(uint8_t *data, uint8_t length) {
