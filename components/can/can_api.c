@@ -125,7 +125,7 @@ if (alerts & TWAI_ALERT_BUS_OFF) {
     
     twai_clear_transmit_queue();
     
-    // Kluczowe: Dajemy 100ms odpoczynku zanim w ogóle zaczniemy recovery
+    // 100ms odpoczynku zanim w ogóle zaczniemy recovery
     vTaskDelay(pdMS_TO_TICKS(100)); 
     twai_initiate_recovery();
 }
@@ -154,11 +154,10 @@ if (alerts & TWAI_ALERT_BUS_OFF) {
     // --- 3. ERROR PASSIVE (Ostrzeżenie przed Bus-Off) ---
     if (alerts & TWAI_ALERT_ERR_PASS) {
         ESP_LOGW("CAN_DIAG", "Alert: ERROR PASSIVE! Sprawdź fizyczne połączenie. TEC: %lu", status.tx_error_counter);
-        // Jeśli szyna nie odpowiada, usuwamy zatory, żeby zrobić miejsce na świeże próby Heartbeata
         if (status.msgs_to_tx > 15) twai_clear_transmit_queue();
     }
 
-    // --- 4. BŁĘDY TRANSMISJI (Cykliczne) ---
+    // --- 4. BŁĘDY TRANSMISJI ---
     if (alerts & (TWAI_ALERT_TX_FAILED | TWAI_ALERT_BUS_ERROR)) {
         if (can_log_periodic) {
             ESP_LOGW("CAN_DIAG", "Błędy magistrali (Brak ACK/BitError). TEC: %lu, Oczekujące TX: %lu", 

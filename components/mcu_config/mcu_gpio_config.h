@@ -28,7 +28,7 @@ typedef enum {
 // ADD GPIO PINS INDICES HERE
 typedef enum {
     LED_GPIO_INDEX = 0,
-    CAN_STBB,
+    CAN_STB_GPIO_INDEX = 1,
     MAX_GPIO_INDEX
 } mcu_gpio_index_cfg_t;
 
